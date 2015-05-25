@@ -70,12 +70,28 @@ public class CommunicationThread extends Thread {
 				BufferedReader bufferedReader = Utilities.getReader(socket);
 				PrintWriter    printWriter    = Utilities.getWriter(socket);
 				if (bufferedReader != null && printWriter != null) {
-					Log.i(Constants.TAG, "[COMMUNICATION THREAD] Waiting for parameters from client (city / information type)!");
+					Log.i(Constants.TAG, "[COMMUNICATION THREAD] Waiting for request)!");
 					
 					String request            = bufferedReader.readLine();
 					
 					if (request.equals("time")) {
-						printWriter.println(getCurrentTime());
+						if(serverThread.getData().containsKey(socket.getRemoteSocketAddress().toString().split(":")[0])) {
+							if(System.currentTimeMillis() - serverThread.getData().get(socket.getRemoteSocketAddress().toString().split(":")[0]) > 60000) {
+								printWriter.println(getCurrentTime());
+								serverThread.setData(socket.getRemoteSocketAddress().toString(), System.currentTimeMillis());
+								Log.i(Constants.TAG, "[SET IP TIME]" + socket.getRemoteSocketAddress().toString().split(":")[0] + " " + System.currentTimeMillis());
+							}
+							else {
+								printWriter.println("[ERROR] Exceede 1 request / minute limit!");
+							}
+						}
+						else {
+							printWriter.println(getCurrentTime());
+							serverThread.setData(socket.getRemoteSocketAddress().toString().split(":")[0], System.currentTimeMillis());
+							Log.i(Constants.TAG, "[SET IP TIME]" + socket.getRemoteSocketAddress().toString().split(":")[0] + " " + System.currentTimeMillis());
+						}
+						
+						
 						
 					} else {
 						Log.e(Constants.TAG, "[COMMUNICATION THREAD] Error receiving parameters from client (only time supported)!");
